@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(MECHANIC)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workOrders WorkOrder[]
+}
+
+enum Role {
+  OWNER
+  RECEPTIONIST
+  MECHANIC
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles   Vehicle[]
+  workOrders WorkOrder[]
+}
+
+model Vehicle {
+  id        String   @id @default(uuid())
+  plate     String   @unique
+  brand     String
+  model     String
+  year      Int?
+  color     String?
+  mileage   Int?
+  clientId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client     Client      @relation(fields: [clientId], references: [id])
+  workOrders WorkOrder[]
+  reminders  Reminder[]
+}
+
+model WorkOrder {
+  id          String        @id @default(uuid())
+  orderNumber String        @unique // e.g., OT-0009
+  status      OrderStatus   @default(PENDING)
+  diagnosis   String?
+  notes       String?
+  mileageIn   Int?
+  total       Float         @default(0)
+  clientId    String
+  vehicleId   String
+  mechanicId  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  client    Client          @relation(fields: [clientId], references: [id])
+  vehicle   Vehicle         @relation(fields: [vehicleId], references: [id])
+  mechanic  User?           @relation(fields: [mechanicId], references: [id])
+  items     WorkOrderItem[]
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  FINISHED
+  DELIVERED
+  CANCELLED
+}
+
+model InventoryItem {
+  id          String   @id @default(uuid())
+  name        String
+  sku         String?  @unique
+  costPrice   Float    @default(0)
+  salePrice   Float    @default(0)
+  stock       Int      @default(0)
+  minStock    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workOrderItems WorkOrderItem[]
+}
+
+model WorkOrderItem {
+  id              String   @id @default(uuid())
+  workOrderId     String
+  inventoryItemId String?
+  description     String
+  quantity        Int      @default(1)
+  unitPrice       Float
+  subtotal        Float
+  type            ItemType @default(PART)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workOrder     WorkOrder      @relation(fields: [workOrderId], references: [id])
+  inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+}
+
+enum ItemType {
+  SERVICE
+  PART
+}
+
+model Reminder {
+  id          String       @id @default(uuid())
+  vehicleId   String
+  type        ReminderType
+  description String?
+  date        DateTime
+  sendType    SendType     @default(MANUAL)
+  status      SendStatus   @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+enum ReminderType {
+  OIL_CHANGE
+  TIRES
+  GENERAL_CHECK
+  OTHER
+}
+
+enum SendType {
+  MANUAL
+  AUTOMATIC
+}
+
+enum SendStatus {
+  PENDING
+  SENT
+}
