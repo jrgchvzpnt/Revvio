@@ -198,7 +198,7 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                 <div className="relative pl-6 border-l-2 border-slate-200 last:border-0 pb-6">
                   <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-1 ring-4 ring-white" />
                   <p className="font-medium text-sm">Estado actualizado</p>
-                  <p className="text-xs text-slate-500 mt-1">La orden se encuentra en {order.status === 'PENDING' ? 'pendiente' : order.status === 'IN_PROGRESS' ? 'proceso' : order.status === 'COMPLETED' ? 'finalizado' : 'entregado'}.</p>
+                  <p className="text-xs text-slate-500 mt-1">La orden se encuentra en {order.status === 'PENDING' ? 'pendiente' : order.status === 'IN_PROCESS' ? 'proceso' : order.status === 'READY' ? 'listo' : order.status === 'DELIVERED' ? 'entregado' : 'cancelado'}.</p>
                   <p className="text-xs text-slate-400 mt-1">
                     {new Date(order.updatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>

@@ -12,11 +12,11 @@ import { updateOrderStatus } from "@/actions/orders";
 import { ChevronDown } from "lucide-react";
 
 const STATUS_MAP = {
-  PENDING: { label: "Pendiente", variant: "secondary" as const },
-  IN_PROGRESS: { label: "En Proceso", variant: "default" as const },
-  FINISHED: { label: "Finalizado", variant: "default" as const },
-  DELIVERED: { label: "Entregado", variant: "outline" as const },
-  CANCELLED: { label: "Cancelado", variant: "destructive" as const },
+  PENDING: { label: "Pendiente", className: "bg-amber-50 text-amber-600 hover:bg-amber-50 border-amber-200", dotClass: "bg-amber-600" },
+  IN_PROCESS: { label: "En Proceso", className: "bg-blue-50 text-blue-600 hover:bg-blue-50 border-blue-200", dotClass: "bg-blue-600" },
+  READY: { label: "Listo", className: "bg-emerald-50 text-emerald-600 hover:bg-emerald-50 border-emerald-200", dotClass: "bg-emerald-600" },
+  DELIVERED: { label: "Entregado", className: "bg-slate-100 text-slate-600 hover:bg-slate-100 border-slate-200", dotClass: "bg-slate-600" },
+  CANCELLED: { label: "Cancelado", className: "bg-red-50 text-red-600 hover:bg-red-50 border-red-200", dotClass: "bg-red-600" },
 };
 
 export function OrderStatusChanger({ 
@@ -24,7 +24,7 @@ export function OrderStatusChanger({
   currentStatus 
 }: { 
   orderId: string; 
-  currentStatus: keyof typeof STATUS_MAP;
+  currentStatus: string;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -36,17 +36,18 @@ export function OrderStatusChanger({
     setLoading(false);
   }
 
-  const current = STATUS_MAP[currentStatus] || STATUS_MAP.PENDING;
+  const current = STATUS_MAP[currentStatus as keyof typeof STATUS_MAP] || STATUS_MAP.PENDING;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger disabled={loading} className="focus:outline-none">
         <Badge 
-          variant={current.variant} 
-          className="ml-auto cursor-pointer flex items-center gap-1"
+          variant="secondary" 
+          className={`ml-auto cursor-pointer flex items-center gap-1.5 ${current.className}`}
         >
+          <span className={`w-1.5 h-1.5 rounded-full ${current.dotClass}`}></span>
           {current.label}
-          <ChevronDown className="w-3 h-3" />
+          <ChevronDown className="w-3 h-3 ml-1" />
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

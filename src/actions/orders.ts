@@ -62,7 +62,7 @@ export async function getOrders() {
   }
 }
 
-export async function updateOrderStatus(orderId: string, status: "PENDING" | "IN_PROGRESS" | "FINISHED" | "DELIVERED" | "CANCELLED") {
+export async function updateOrderStatus(orderId: string, status: string) {
   try {
     const order = await prisma.workOrder.update({
       where: { id: orderId },

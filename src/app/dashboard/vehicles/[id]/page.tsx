@@ -33,7 +33,7 @@ export default async function VehicleDetailsPage({ params }: { params: { id: str
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const totalSpent = vehicle.workOrders.reduce((sum: number, order: any) => sum + Number(order.total), 0);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const completedOrders = vehicle.workOrders.filter((o: any) => o.status === 'COMPLETED' || o.status === 'DELIVERED').length;
+  const completedOrders = vehicle.workOrders.filter((o: any) => o.status === 'READY' || o.status === 'DELIVERED').length;
 
   return (
     <div className="space-y-6">
@@ -109,8 +109,8 @@ export default async function VehicleDetailsPage({ params }: { params: { id: str
                           </Link>
                           <Badge variant={
                             order.status === 'PENDING' ? 'secondary' :
-                            order.status === 'IN_PROGRESS' ? 'default' :
-                            order.status === 'COMPLETED' ? 'default' :
+                            order.status === 'IN_PROCESS' ? 'default' :
+                            order.status === 'READY' ? 'default' :
                             order.status === 'DELIVERED' ? 'outline' : 'destructive'
                           }>
                             {order.status}
