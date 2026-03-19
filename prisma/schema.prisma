@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -11,17 +11,11 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String
-  role      Role     @default(MECHANIC)
+  role      String   @default("MECHANIC")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   workOrders WorkOrder[]
-}
-
-enum Role {
-  OWNER
-  RECEPTIONIST
-  MECHANIC
 }
 
 model Client {
@@ -57,9 +51,10 @@ model Vehicle {
 model WorkOrder {
   id          String        @id @default(uuid())
   orderNumber String        @unique // e.g., OT-0009
-  status      OrderStatus   @default(PENDING)
+  status      String        @default("PENDING")
   diagnosis   String?
   notes       String?
+  damages     String?
   mileageIn   Int?
   total       Float         @default(0)
   clientId    String
@@ -72,14 +67,6 @@ model WorkOrder {
   vehicle   Vehicle         @relation(fields: [vehicleId], references: [id])
   mechanic  User?           @relation(fields: [mechanicId], references: [id])
   items     WorkOrderItem[]
-}
-
-enum OrderStatus {
-  PENDING
-  IN_PROGRESS
-  FINISHED
-  DELIVERED
-  CANCELLED
 }
 
 model InventoryItem {
@@ -104,7 +91,7 @@ model WorkOrderItem {
   quantity        Int      @default(1)
   unitPrice       Float
   subtotal        Float
-  type            ItemType @default(PART)
+  type            String   @default("PART")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -112,38 +99,16 @@ model WorkOrderItem {
   inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id])
 }
 
-enum ItemType {
-  SERVICE
-  PART
-}
-
 model Reminder {
   id          String       @id @default(uuid())
   vehicleId   String
-  type        ReminderType
+  type        String
   description String?
   date        DateTime
-  sendType    SendType     @default(MANUAL)
-  status      SendStatus   @default(PENDING)
+  sendType    String       @default("MANUAL")
+  status      String       @default("PENDING")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id])
-}
-
-enum ReminderType {
-  OIL_CHANGE
-  TIRES
-  GENERAL_CHECK
-  OTHER
-}
-
-enum SendType {
-  MANUAL
-  AUTOMATIC
-}
-
-enum SendStatus {
-  PENDING
-  SENT
 }
