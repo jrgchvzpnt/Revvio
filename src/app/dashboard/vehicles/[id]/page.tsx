@@ -3,8 +3,9 @@ import prisma from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Car, User, Wrench, History } from "lucide-react";
+import { ArrowLeft, Calendar, Car, User, Wrench, History, Bell } from "lucide-react";
 import Link from "next/link";
+import { NewReminderDialog } from "@/components/vehicles/new-reminder-dialog";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,9 @@ export default async function VehicleDetailsPage({ params }: { params: { id: str
     where: { id: params.id },
     include: {
       client: true,
+      reminders: {
+        orderBy: { date: 'asc' }
+      },
       workOrders: {
         orderBy: { createdAt: 'desc' },
         include: {
@@ -209,6 +213,47 @@ export default async function VehicleDetailsPage({ params }: { params: { id: str
               <Link href={`/dashboard/clients`}>
                 <Button variant="outline" className="w-full mt-2">Ver Todos los Clientes</Button>
               </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Bell className="w-5 h-5 text-emerald-600" />
+                Sistema de recordatorios
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-slate-500">Resumen de recordatorios más relevantes para este vehículo.</p>
+              <NewReminderDialog vehicleId={vehicle.id} />
+              
+              <div className="space-y-3 mt-4">
+                {vehicle.reminders.length > 0 ? (
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  vehicle.reminders.map((reminder: any) => (
+                    <div key={reminder.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <Bell className="w-4 h-4 text-emerald-600" />
+                          <span className="font-medium">{reminder.type}</span>
+                        </div>
+                      </div>
+                      {reminder.description && (
+                        <p className="text-sm text-slate-500">{reminder.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Calendar className="w-3 h-3" />
+                        <span>Programado: {new Date(reminder.date).toLocaleDateString()}</span>
+                        <Badge variant="outline" className="ml-auto text-[10px]">
+                          {reminder.sendType === 'AUTOMATIC' ? 'Automático' : 'Manual'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-4">No hay recordatorios programados.</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

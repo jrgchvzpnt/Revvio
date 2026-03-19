@@ -36,4 +36,26 @@ export class ClientService {
       return { success: false, error: "Error al obtener los clientes" };
     }
   }
+
+  async updateClient(id: string, data: { name: string; phone?: string; email?: string; notes?: string }) {
+    try {
+      const validatedData = clientSchema.parse(data);
+      const client = await this.repository.update(id, validatedData);
+      return { success: true, data: client };
+    } catch (error: unknown) {
+      if (error instanceof z.ZodError) {
+        return { success: false, error: error.issues[0].message };
+      }
+      return { success: false, error: "Error al actualizar el cliente" };
+    }
+  }
+
+  async deleteClient(id: string) {
+    try {
+      await this.repository.delete(id);
+      return { success: true };
+    } catch {
+      return { success: false, error: "Error al eliminar el cliente" };
+    }
+  }
 }

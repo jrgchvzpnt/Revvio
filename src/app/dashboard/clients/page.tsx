@@ -8,13 +8,13 @@ import {
   Car, 
   Phone, 
   Mail,
-  MoreHorizontal,
   FileText,
   LayoutGrid,
   List,
   Clock
 } from "lucide-react";
 import { NewClientDialog } from "@/components/clients/new-client-dialog";
+import { ClientActions } from "@/components/clients/client-actions";
 import { getClients } from "@/actions/clients";
 
 export const dynamic = 'force-dynamic';
@@ -140,9 +140,7 @@ export default async function ClientsPage() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
+                  <ClientActions client={client} />
                 </div>
                 
                 <div className="space-y-2 mb-4">

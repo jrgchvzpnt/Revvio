@@ -75,3 +75,71 @@ export async function updateOrderStatus(orderId: string, status: "PENDING" | "IN
     return { success: false, error: "Error al actualizar el estado de la orden" };
   }
 }
+
+const orderItemSchema = z.object({
+  workOrderId: z.string().min(1, "La orden es requerida"),
+  inventoryItemId: z.string().optional(),
+  description: z.string().min(1, "La descripción es requerida"),
+  quantity: z.coerce.number().min(1, "La cantidad debe ser mayor a 0"),
+  unitPrice: z.coerce.number().min(0, "El precio no puede ser negativo"),
+  type: z.enum(["PART", "SERVICE"]),
+});
+
+export async function addOrderItem(formData: FormData) {
+  try {
+    const data = {
+      workOrderId: formData.get("workOrderId") as string,
+      inventoryItemId: formData.get("inventoryItemId") as string || undefined,
+      description: formData.get("description") as string,
+      quantity: Number(formData.get("quantity")),
+      unitPrice: Number(formData.get("unitPrice")),
+      type: formData.get("type") as "PART" | "SERVICE",
+    };
+
+    const validatedData = orderItemSchema.parse(data);
+    const subtotal = validatedData.quantity * validatedData.unitPrice;
+
+    // Start a transaction to add the item and update the order total
+    await prisma.$transaction(async (tx) => {
+      // Create the item
+      await tx.workOrderItem.create({
+        data: {
+          ...validatedData,
+          subtotal,
+        },
+      });
+
+      // If it's a part and has an inventory item, decrease stock
+      if (validatedData.type === "PART" && validatedData.inventoryItemId) {
+        await tx.inventoryItem.update({
+          where: { id: validatedData.inventoryItemId },
+          data: {
+            stock: {
+              decrement: validatedData.quantity,
+            },
+          },
+        });
+      }
+
+      // Update order total
+      const orderItems = await tx.workOrderItem.findMany({
+        where: { workOrderId: validatedData.workOrderId },
+      });
+      
+      const newTotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+      
+      await tx.workOrder.update({
+        where: { id: validatedData.workOrderId },
+        data: { total: newTotal },
+      });
+    });
+
+    revalidatePath(`/dashboard/orders/${validatedData.workOrderId}`);
+    return { success: true };
+  } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message };
+    }
+    return { success: false, error: "Error al agregar el ítem" };
+  }
+}

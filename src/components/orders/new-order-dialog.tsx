@@ -71,7 +71,7 @@ export function NewOrderDialog({ vehicles }: { vehicles: Vehicle[] }) {
               Registra el ingreso de un vehículo al taller.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
             {error && <p className="text-sm text-red-500">{error}</p>}
             <div className="grid gap-2">
               <label htmlFor="vehicleId" className="text-sm font-medium">Vehículo *</label>
