@@ -62,13 +62,28 @@ export async function getOrders() {
   }
 }
 
+import { sendWhatsAppMessage } from "@/services/whatsapp.service";
+
 export async function updateOrderStatus(orderId: string, status: string) {
   try {
     const order = await prisma.workOrder.update({
       where: { id: orderId },
       data: { status },
+      include: {
+        vehicle: {
+          include: {
+            client: true
+          }
+        }
+      }
     });
     
+    if ((status === "READY" || status === "DELIVERED") && order.vehicle.client.phone) {
+      const statusText = status === "READY" ? "listo para entrega" : "entregado";
+      const message = `Hola ${order.vehicle.client.name}, te informamos que tu vehículo ${order.vehicle.brand} ${order.vehicle.model} (Placa: ${order.vehicle.plate}) está ${statusText}. ¡Gracias por confiar en Revvio!`;
+      await sendWhatsAppMessage(order.vehicle.client.phone, message);
+    }
+
     revalidatePath("/dashboard/orders");
     return { success: true, data: order };
   } catch {

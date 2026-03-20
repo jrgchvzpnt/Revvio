@@ -19,10 +19,19 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { NewInventoryDialog } from "@/components/inventory/new-inventory-dialog";
+import { getInventoryItems } from "@/actions/inventory";
+import { InventoryTableRow } from "@/components/inventory/inventory-table-row";
 
 export const dynamic = 'force-dynamic';
 
-export default function InventoryPage() {
+export default async function InventoryPage() {
+  const { data: items = [] } = await getInventoryItems();
+  
+  const totalItems = items?.length || 0;
+  const lowStockItems = items?.filter(item => item.stock <= item.minStock && item.stock > 0) || [];
+  const outOfStockItems = items?.filter(item => item.stock === 0) || [];
+  const totalValue = items?.reduce((acc, item) => acc + (item.costPrice * item.stock), 0) || 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -35,16 +44,20 @@ export default function InventoryPage() {
       </div>
 
       {/* Alert Banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
-        <div className="flex-1">
-          <h3 className="text-sm font-medium text-amber-800">Stock bajo detectado</h3>
-          <p className="text-sm text-amber-700 mt-1">2 repuestos están por debajo del mínimo configurado</p>
+      {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-amber-800">Stock bajo detectado</h3>
+            <p className="text-sm text-amber-700 mt-1">
+              {lowStockItems.length + outOfStockItems.length} repuestos están por debajo del mínimo configurado
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" className="text-amber-600 hover:bg-amber-100 -mt-1 -mr-1">
+            <XCircle className="w-4 h-4" />
+          </Button>
         </div>
-        <Button variant="ghost" size="icon" className="text-amber-600 hover:bg-amber-100 -mt-1 -mr-1">
-          <XCircle className="w-4 h-4" />
-        </Button>
-      </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -55,7 +68,7 @@ export default function InventoryPage() {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase">Total Repuestos</p>
-              <p className="text-2xl font-bold text-slate-900">2</p>
+              <p className="text-2xl font-bold text-slate-900">{totalItems}</p>
             </div>
           </CardContent>
         </Card>
@@ -66,7 +79,7 @@ export default function InventoryPage() {
             </div>
             <div>
               <p className="text-xs font-medium text-amber-600 uppercase">Stock Bajo</p>
-              <p className="text-2xl font-bold text-amber-700">2</p>
+              <p className="text-2xl font-bold text-amber-700">{lowStockItems.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -77,7 +90,7 @@ export default function InventoryPage() {
             </div>
             <div>
               <p className="text-xs font-medium text-red-600 uppercase">Sin Stock</p>
-              <p className="text-2xl font-bold text-red-700">1</p>
+              <p className="text-2xl font-bold text-red-700">{outOfStockItems.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -88,7 +101,7 @@ export default function InventoryPage() {
             </div>
             <div>
               <p className="text-xs font-medium text-emerald-600 uppercase">Valor Inventario</p>
-              <p className="text-2xl font-bold text-emerald-700">$30.00</p>
+              <p className="text-2xl font-bold text-emerald-700">${totalValue.toFixed(2)}</p>
             </div>
           </CardContent>
         </Card>
@@ -101,7 +114,9 @@ export default function InventoryPage() {
             <h2 className="text-lg font-semibold text-slate-800">Centro de Gestión de Inventario</h2>
             <p className="text-sm text-slate-500">Filtra, ajusta y actúa sobre repuestos con una vista operativa enfocada en rapidez.</p>
           </div>
-          <Badge variant="secondary" className="bg-amber-50 text-amber-600">2 en alerta</Badge>
+          <Badge variant="secondary" className="bg-amber-50 text-amber-600">
+            {lowStockItems.length + outOfStockItems.length} en alerta
+          </Badge>
         </div>
         
         {/* Search and Filters */}
@@ -112,16 +127,16 @@ export default function InventoryPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="bg-slate-100">
-              Todos <Badge variant="secondary" className="ml-2">2</Badge>
+              Todos <Badge variant="secondary" className="ml-2">{totalItems}</Badge>
             </Button>
             <Button variant="ghost" size="sm" className="text-slate-500">
-              En stock <Badge variant="secondary" className="ml-2">0</Badge>
+              En stock <Badge variant="secondary" className="ml-2">{totalItems - lowStockItems.length - outOfStockItems.length}</Badge>
             </Button>
             <Button variant="ghost" size="sm" className="text-slate-500">
-              Stock bajo <Badge variant="secondary" className="ml-2">1</Badge>
+              Stock bajo <Badge variant="secondary" className="ml-2">{lowStockItems.length}</Badge>
             </Button>
             <Button variant="ghost" size="sm" className="text-slate-500">
-              Sin stock <Badge variant="secondary" className="ml-2">1</Badge>
+              Sin stock <Badge variant="secondary" className="ml-2">{outOfStockItems.length}</Badge>
             </Button>
             <Button variant="outline" size="sm">
               ↑↓ Nombre A-Z
@@ -143,71 +158,16 @@ export default function InventoryPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Row 1 */}
-            <TableRow>
-              <TableCell>
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium">Filtro de aceite sintético</div>
-                    <div className="text-xs text-slate-500">FE-23434</div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell className="text-sm">$24.57</TableCell>
-              <TableCell className="font-medium">$30.00</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-6 w-6">-</Button>
-                  <span className="w-4 text-center text-sm">1</span>
-                  <Button variant="outline" size="icon" className="h-6 w-6">+</Button>
-                </div>
-              </TableCell>
-              <TableCell className="text-sm text-slate-500">1</TableCell>
-              <TableCell>
-                <Badge variant="secondary" className="bg-amber-50 text-amber-600 hover:bg-amber-50">
-                  Bajo
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-
-            {/* Row 2 */}
-            <TableRow>
-              <TableCell>
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium">Prueba prueba</div>
-                    <div className="text-xs text-slate-500">BA-234</div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell className="text-sm">$1,234.43</TableCell>
-              <TableCell className="font-medium">$1,234.43</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-6 w-6">-</Button>
-                  <span className="w-4 text-center text-sm">0</span>
-                  <Button variant="outline" size="icon" className="h-6 w-6">+</Button>
-                </div>
-              </TableCell>
-              <TableCell className="text-sm text-slate-500">1</TableCell>
-              <TableCell>
-                <Badge variant="secondary" className="bg-red-50 text-red-600 hover:bg-red-50">
-                  Sin stock
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
+            {items?.map((item) => (
+              <InventoryTableRow key={item.id} item={item} />
+            ))}
+            {(!items || items.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                  No hay repuestos en el inventario
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Card>

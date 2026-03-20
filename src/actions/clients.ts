@@ -2,10 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { ClientService } from "@/services/client.service";
+import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
 const clientService = new ClientService();
 
 export async function createClient(formData: FormData) {
+  const supabase = await createSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "No autorizado" };
+
   const data = {
     name: formData.get("name")?.toString() || "",
     phone: formData.get("phone")?.toString() || "",
@@ -23,10 +28,18 @@ export async function createClient(formData: FormData) {
 }
 
 export async function getClients() {
+  const supabase = await createSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "No autorizado" };
+
   return await clientService.getClients();
 }
 
 export async function updateClient(id: string, formData: FormData) {
+  const supabase = await createSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "No autorizado" };
+
   const data = {
     name: formData.get("name")?.toString() || "",
     phone: formData.get("phone")?.toString() || "",
@@ -44,6 +57,10 @@ export async function updateClient(id: string, formData: FormData) {
 }
 
 export async function deleteClient(id: string) {
+  const supabase = await createSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "No autorizado" };
+
   const result = await clientService.deleteClient(id);
 
   if (result.success) {
